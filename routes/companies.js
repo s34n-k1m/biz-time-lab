@@ -26,7 +26,7 @@ router.get("/:code",
 
     const company = results.rows[0];
 
-    if (!company) throw new NotFoundError();
+    if (company===undefined) throw new NotFoundError();
 
     return res.json({ company });
   });
@@ -59,7 +59,7 @@ router.put("/:code",
               RETURNING code, name, description`,
       [code, name, description]);
     const company = result.rows[0];
-    if (!company) throw new NotFoundError();
+    if (company===undefined) throw new NotFoundError();
 
     return res.json({ company });
   });
@@ -73,7 +73,7 @@ router.delete("/:code",
        WHERE code=$1
        RETURNING code`, [code]);
     const company = result.rows[0];
-    if (!company) throw new NotFoundError();
+    if (company===undefined) throw new NotFoundError();
     return res.json({ "status": "deleted" });
   });
 
