@@ -1,3 +1,4 @@
+"use strict";
 const express = require("express");
 const router = new express.Router();
 const db = require("../db");
@@ -23,20 +24,18 @@ router.get("/",
 router.get("/:code",
   async function (req, res, next) {
     let code = req.params.code;
-
     const companyResult = await db.query(
       `SELECT code, name, description
                FROM companies
                WHERE code = $1`, [code]);
 
     const company = companyResult.rows[0];
-    
     if (company === undefined) throw new NotFoundError();
 
     const invoicesResults = await db.query(
-      `SELECT id, comp_code, amt, paid, add_date, paid_date
-                FROM invoices
-                WHERE comp_code=$1,` [company.code]);
+      `SELECT id
+           FROM invoices
+           WHERE comp_code=$1`, [company.code]);
 
     const invoices = invoicesResults.rows;
     company.invoices = invoices.map(inv => inv.id);
@@ -62,7 +61,7 @@ router.post("/",
 
 /*  PUT /companies/[code] Returns an updated company
 Needs to be given JSON like: {name, description}
-Returns update company object: {company: {code, name, description}} 
+Returns update company object: {company: {code, name, description}}
 */
 router.put("/:code",
   async function (req, res, next) {
@@ -82,7 +81,7 @@ router.put("/:code",
     return res.json({ company });
   });
 
-/* DELETE /companies/[code] Returns {status: deleted} or 404 based 
+/* DELETE /companies/[code] Returns {status: deleted} or 404 based
 on company code in URL Parameter
 Returns: {status: "deleted"}
 */

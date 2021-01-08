@@ -1,19 +1,21 @@
+"use strict";
 const { json } = require("body-parser");
 const express = require("express");
 const router = new express.Router();
 const db = require("../db");
 const { NotFoundError } = require("../expressError");
 
-/** GET /companies Returns list of all the invoices.
+/** GET /invoices Returns list of all the invoices.
  * {invoices: [{id, comp_code}, ...]}
  */
 router.get("/",
   async function (req, res, next) {
     const results = await db.query(
-      `SELECT id, comp_code,
+      `SELECT id, comp_code
                FROM invoices`);
 
     const invoices = results.rows;
+    // console.log("INVOICES: ",invoices);
     return res.json({ invoices });
   });
 
@@ -91,7 +93,7 @@ router.put("/:id",
 router.delete("/:id",
   async function (req, res, next) {
     let id = req.params.id;
-    
+
     const result = await db.query(
       `DELETE FROM invoices
        WHERE code=$1
@@ -100,7 +102,7 @@ router.delete("/:id",
     const invoice = result.rows[0];
 
     if (invoice === undefined) throw new NotFoundError();
-    
+
     return res.json({ "status": "deleted" });
   });
 
