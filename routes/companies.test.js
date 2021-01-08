@@ -6,8 +6,8 @@ let db = require("../db");
 let testCompany;
 
 beforeEach(async function () {
-  await db.query("DELETE FROM companies");
   await db.query("DELETE FROM invoices");
+  await db.query("DELETE FROM companies");
   await db.query(
     `INSERT INTO companies
     VALUES ('apple', 'Apple Computer', 'Maker of OSX.'),
@@ -105,6 +105,15 @@ describe("DELETE /companies/[code]", function () {
       .delete(`/companies/ibm`);
     expect(resp.statusCode).toEqual(200);
     expect(resp.body).toEqual({ "status": "deleted" });
+
+    const results = await db.query(`
+      SELECT code
+        FROM companies
+    `);
+
+    const companies = results.rows;
+    expect(results.rows.length).toEqual(1);
+
   });
   it("Responds with 404 if name invalid", async function () {
     const resp = await request(app).delete(`/companies/gimmie404`);

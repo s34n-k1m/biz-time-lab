@@ -3,7 +3,7 @@ const { json } = require("body-parser");
 const express = require("express");
 const router = new express.Router();
 const db = require("../db");
-const { NotFoundError } = require("../expressError");
+const { BadRequestError, NotFoundError } = require("../expressError");
 
 /** GET /invoices Returns list of all the invoices.
  * {invoices: [{id, comp_code}, ...]}
@@ -27,23 +27,29 @@ router.get("/:id",
   async function (req, res, next) {
     let id = req.params.id;
 
+    if (!parseInt(id)) throw new BadRequestError();
+
     const invoiceResults = await db.query(
-      `SELECT id, amt, paid, add_date, paid_date
+      `SELECT id, comp_code, amt, paid, add_date, paid_date
                 FROM invoices
                 WHERE id = $1`, [id]);
+    
 
     const invoice = invoiceResults.rows[0];
+    
+    if (invoice === undefined) throw new NotFoundError();
 
     const companyResults = await db.query(
       `SELECT code, name, description
                 FROM companies
                 WHERE code = $1`, [invoice.comp_code]);
 
-    const company = companyResults.row[0];
+                
+    const company = companyResults.rows[0];
+    invoice.company = company;
+    delete invoice.comp_code;
 
-    if (invoice === undefined) throw new NotFoundError();
-
-    return json({ invoice, company });
+    return res.json({ invoice });
   }
 )
 

@@ -3,10 +3,13 @@ const request = require("supertest");
 const app = require("../app");
 let db = require("../db");
 
+let testInvoice;
 let testCompany;
 
 beforeEach(async function () {
+  await db.query("DELETE FROM invoices");
   await db.query("DELETE FROM companies");
+
   await db.query(
     `INSERT INTO companies
     VALUES ('apple', 'Apple Computer', 'Maker of OSX.'),
@@ -18,6 +21,21 @@ beforeEach(async function () {
            ('apple', 200, FALSE, NULL),
            ('apple', 300, TRUE, '2018-01-01'),
            ('ibm', 400, FALSE, NULL);`);
+
+  const invoiceResult = db.query(`
+    SELECT id, amt, paid, add_date, paid_date, company
+      FROM invoices
+  `);
+
+  testInvoice = invoiceResult.rows[0];
+
+  const companyResult = db.query(`
+    SELECT code, name, description
+      FROM companies
+      WHERE code = $1`, [testInvoice.id]);
+  
+  testCompany = companyResult.rows[0];
+
 });
 
 afterAll(async function () {
@@ -32,11 +50,12 @@ describe("GET /invoices", function () {
     const resp = await request(app)
       .get(`/invoices`);
     expect(resp.statusCode).toEqual(200);
-    expect(resp.body).toEqual({ "invoices": [
-      { "id": expect.any(Number), "comp_code": "apple" },
-      { "id": expect.any(Number), "comp_code": "apple" },
-      { "id": expect.any(Number), "comp_code": "apple" },
-      { "id": expect.any(Number), "comp_code": "ibm"   }]
+    expect(resp.body).toEqual({
+      "invoices": [
+        { "id": expect.any(Number), "comp_code": "apple" },
+        { "id": expect.any(Number), "comp_code": "apple" },
+        { "id": expect.any(Number), "comp_code": "apple" },
+        { "id": expect.any(Number), "comp_code": "ibm" }]
     });
   });
 
@@ -51,6 +70,22 @@ describe("GET /invoices", function () {
  * If invoice cannot be found, returns 404.
  * Returns {invoice: {id, amt, paid, add_date, paid_date, company: {code, name, description}}
  */
+describe("GET /invoices/[id]", function () {
+  it("Gets a single invoice", async function () {
+    const resp = await request(app)
+      .get(`/invoices/${testInvoice.id}`);
+
+    testInvoice.company = testCompany;
+
+    expect(resp.statusCode).toEqual(200);
+    expect(resp.body).toEqual({ testInvoice });
+  });
+
+  it("Responds with 400 if id not a number", async function () {
+    const resp = await request(app).get(`/invoices/gimmie404`);
+    expect(resp.statusCode).toEqual(400);
+  });
+});
 
 
 /* Test function for:
