@@ -9,7 +9,7 @@ beforeEach(async function () {
   await db.query("DELETE FROM invoices");
   await db.query("DELETE FROM companies");
   await db.query(
-    `INSERT INTO companies
+    `INSERT INTO companies (code, name, description)
     VALUES ('apple', 'Apple Computer', 'Maker of OSX.'),
            ('ibm', 'IBM', 'Big blue.');`);
 

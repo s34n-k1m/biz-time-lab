@@ -1,5 +1,6 @@
 "use strict";
 const { json } = require("body-parser");
+const { Console } = require("console");
 const express = require("express");
 const router = new express.Router();
 const db = require("../db");
@@ -15,7 +16,7 @@ router.get("/",
                FROM invoices`);
 
     const invoices = results.rows;
-    // console.log("INVOICES: ",invoices);
+    console.log("INVOICES: ",invoices);
     return res.json({ invoices });
   });
 
@@ -26,17 +27,16 @@ router.get("/",
 router.get("/:id",
   async function (req, res, next) {
     let id = req.params.id;
-
     if (!parseInt(id)) throw new BadRequestError();
 
     const invoiceResults = await db.query(
       `SELECT id, comp_code, amt, paid, add_date, paid_date
                 FROM invoices
                 WHERE id = $1`, [id]);
-    
+
 
     const invoice = invoiceResults.rows[0];
-    
+
     if (invoice === undefined) throw new NotFoundError();
 
     const companyResults = await db.query(
@@ -44,7 +44,7 @@ router.get("/:id",
                 FROM companies
                 WHERE code = $1`, [invoice.comp_code]);
 
-                
+
     const company = companyResults.rows[0];
     invoice.company = company;
     delete invoice.comp_code;
