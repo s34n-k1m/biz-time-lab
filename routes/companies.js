@@ -2,7 +2,7 @@
 const express = require("express");
 const router = new express.Router();
 const db = require("../db");
-const { NotFoundError } = require("../expressError");
+const { BadRequestError, NotFoundError } = require("../expressError");
 
 /** GET /companies Returns a list of all the companies.
  * Returns: {companies: [{code, name}, ...]}
@@ -49,6 +49,8 @@ Returns obj of new company: {company: {code, name, description}}*/
 router.post("/",
   async function (req, res, next) {
     let { code, name, description } = req.body;
+    if (code === undefined || name === undefined || description === undefined){
+      throw new BadRequestError(); }
 
     const result = await db.query(
       `INSERT INTO companies (code, name, description)
